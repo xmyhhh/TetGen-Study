@@ -7930,6 +7930,27 @@ REAL tetgenmesh::orient3dfast(REAL* pa, REAL* pb, REAL* pc, REAL* pd)
 		+ cdx * (ady * bdz - adz * bdy);
 }
 
+REAL tetgenmesh::orient3d_xmy(REAL* pa, REAL* pb, REAL* pc, REAL* pd)
+{
+	REAL adx, bdx, cdx;
+	REAL ady, bdy, cdy;
+	REAL adz, bdz, cdz;
+
+	adx = pa[0] - pd[0];
+	bdx = pa[1] - pd[1];
+	cdx = pa[2] - pd[2];
+	ady = pb[0] - pd[0];
+	bdy = pb[1] - pd[1];
+	cdy = pb[2] - pd[2];
+	adz = pc[0] - pd[0];
+	bdz = pc[1] - pd[1];
+	cdz = pc[2] - pd[2];
+
+	return adx * (bdy * cdz - bdz * cdy)
+		+ bdx * (cdy * adz - cdz * ady)
+		+ cdx * (ady * bdz - adz * bdy);
+}
+
 //============================================================================//
 //                                                                            //
 // interiorangle()    Return the interior angle (0 - 2 * PI) between vectors  //
@@ -13306,8 +13327,7 @@ void tetgenmesh::hilbert_sort3(point* vertexarray, int arraysize, int e, int d,
 //                                                                            //
 //============================================================================//
 
-void tetgenmesh::brio_multiscale_sort(point* vertexarray, int arraysize,
-	int threshold, REAL ratio, int* depth)
+void tetgenmesh::brio_multiscale_sort(point* vertexarray, int arraysize, int threshold, REAL ratio, int* depth)
 {
 	int middle;
 
@@ -13524,6 +13544,7 @@ enum tetgenmesh::locateresult
 	}
 
 	// Let searchtet be the face such that 'searchpt' lies above to it.
+	//选一个面，从0边所在的面开始，保证searchtet在这个面的四面体心侧
 	for (searchtet->ver = 0; searchtet->ver < 4; searchtet->ver++)
 	{
 		ori = orient3d(org(*searchtet), dest(*searchtet), apex(*searchtet), searchpt);
@@ -13538,6 +13559,7 @@ enum tetgenmesh::locateresult
 	// Walk through tetrahedra to locate the point.
 	do
 	{
+		//找到之前选的面的对顶点，例如之前选的面是bcd，那么对顶点就是a
 		toppo = oppo(*searchtet);
 
 		// Check if the vertex is we seek.
@@ -13555,6 +13577,7 @@ enum tetgenmesh::locateresult
 		s = rand() % 3; // s \in \{0,1,2\}
 		for (i = 0; i < s; i++) enextself(*searchtet);
 
+		//接下来分别判断和对顶点相连的三个面和searchpt的关系，如果oriorg<0，说明在四面体心侧
 		oriorg = orient3d(dest(*searchtet), apex(*searchtet), toppo, searchpt);
 		if (oriorg < 0)
 		{
@@ -13897,8 +13920,7 @@ enum tetgenmesh::locateresult
 //                                                                            //
 //============================================================================//
 
-int tetgenmesh::insert_vertex_bw(point insertpt, triface* searchtet,
-	insertvertexflags* ivf)
+int tetgenmesh::insert_vertex_bw(point insertpt, triface* searchtet, insertvertexflags* ivf)
 {
 	tetrahedron** ptptr, * tptr;
 	triface cavetet, spintet, neightet, neineitet, * parytet;
@@ -14015,6 +14037,7 @@ int tetgenmesh::insert_vertex_bw(point insertpt, triface* searchtet,
 			if (!infected(neightet))
 			{
 				// neightet.tet is current outside the cavity.
+
 				enqflag = false;
 				if (!marktested(neightet))
 				{
@@ -14026,6 +14049,7 @@ int tetgenmesh::insert_vertex_bw(point insertpt, triface* searchtet,
 					}
 					else
 					{
+
 						pts = (point*)neightet.tet;
 						ori = orient3d(pts[4], pts[5], pts[6], insertpt);
 						if (ori < 0)
@@ -14527,8 +14551,7 @@ void tetgenmesh::incrementaldelaunay(clock_t& tv)
 
 	// Make sure the fourth vertex is not coplanar with the first three.
 	i = 3;
-	ori = orient3dfast(permutarray[0], permutarray[1], permutarray[2],
-		permutarray[i]);
+	ori = orient3dfast(permutarray[0], permutarray[1], permutarray[2], permutarray[i]);
 	while ((fabs(ori) / bboxsize3) < b->epsilon)
 	{
 		i++;
@@ -14550,7 +14573,7 @@ void tetgenmesh::incrementaldelaunay(clock_t& tv)
 	}
 
 	// Orient the first four vertices in permutarray so that they follow the
-	//   right-hand rule.
+	// right-hand rule.
 	if (ori > 0.0)
 	{
 		// Swap the first two vertices.
@@ -14560,8 +14583,7 @@ void tetgenmesh::incrementaldelaunay(clock_t& tv)
 	}
 
 	// Create the initial Delaunay tetrahedralization.
-	initialdelaunay(permutarray[0], permutarray[1], permutarray[2],
-		permutarray[3]);
+	initialdelaunay(permutarray[0], permutarray[1], permutarray[2], permutarray[3]);
 
 	if (b->verbose)
 	{

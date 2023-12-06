@@ -1786,6 +1786,7 @@ public:
 
 	// Geometric calculations (non-robust)
 	REAL orient3dfast(REAL* pa, REAL* pb, REAL* pc, REAL* pd);
+	REAL orient3d_xmy(REAL* pa, REAL* pb, REAL* pc, REAL* pd);
 	inline REAL norm2(REAL x, REAL y, REAL z);
 	inline REAL distance(REAL* p1, REAL* p2);
 	inline REAL distance2(REAL* p1, REAL* p2);
