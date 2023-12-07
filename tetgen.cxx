@@ -14033,23 +14033,26 @@ int tetgenmesh::insert_vertex_bw(point insertpt, triface* searchtet, insertverte
 		cavetet.tet = *ptptr;
 		for (cavetet.ver = 0; cavetet.ver < 4; cavetet.ver++)
 		{
+			//拿到neightet
 			neightet.tet = decode_tet_only(cavetet.tet[cavetet.ver]);
+			//neightet如果已经染色就不再继续
 			if (!infected(neightet))
 			{
 				// neightet.tet is current outside the cavity.
-
 				enqflag = false;
 				if (!marktested(neightet))
 				{
 					if (!ishulltet(neightet))
 					{
+						//如果不是边缘四面体
 						pts = (point*)neightet.tet;
 						sign = insphere_s(pts[4], pts[5], pts[6], pts[7], insertpt);
+						//如果不共圆，加入cave_oldtet_list，等下次搜索
 						enqflag = (sign < 0.0);
 					}
 					else
 					{
-
+						//如果是边缘四面体，检查是不是visible face，如果是就加入cavebdrylist
 						pts = (point*)neightet.tet;
 						ori = orient3d(pts[4], pts[5], pts[6], insertpt);
 						if (ori < 0)
@@ -14128,7 +14131,7 @@ int tetgenmesh::insert_vertex_bw(point insertpt, triface* searchtet, insertverte
 		for (i = 0; i < f_out; i++)
 		{
 			pcavetet = (triface*)fastlookup(cavebdrylist, i);
-			oldtet = *pcavetet;
+ 			oldtet = *pcavetet;
 
 			// Get the tet outside the cavity.
 			decode(oldtet.tet[oldtet.ver], neightet);
